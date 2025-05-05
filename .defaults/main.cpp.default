@@ -1,10 +1,8 @@
-﻿#include <iostream>
-#include <cstdio>
-#include <memory>
-#include <stdexcept>
+#include <iostream>
 #include <string>
 #include <filesystem>
-#include "class.h"
+
+#include "subdir/class.hpp"
 
 using std::cin;
 using std::cout;
@@ -15,7 +13,6 @@ using std::wstring;
 namespace fs = std::filesystem;
 
 int main(){
-    // std::cout << cmd("ifconfig");
     std::wcout << "Hello World!\n";
     return 0;
 }

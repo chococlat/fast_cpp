@@ -10,11 +10,9 @@ if (POLICY CMP0141)
 endif()
 
 # Create project
-project(myproj1 VERSION 0.1.0 LANGUAGES C CXX)
+project({{PROJ_NAME}} VERSION 0.1.0 LANGUAGES C CXX)
 
 # Add subdirectories
 add_subdirectory(core)
 # add_subdirectory(apps/app1)
-add_subdirectory(apps/asd)
-add_subdirectory(apps/sdf)
-
+{{APP_INCLUSIONS}}
