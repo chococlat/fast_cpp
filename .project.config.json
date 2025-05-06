@@ -3,5 +3,18 @@
   "APPS": [
     "asd",
     "sdf"
-  ]
+  ],
+  "EXTERNAL_DEPENDENCIES": [
+    {
+      "ALIAS": "fmt",
+      "GIT_REPOSITORY": "https://github.com/fmtlib/fmt.git",
+      "GIT_TAG": "9.1.0"
+    },
+    {
+      "ALIAS": "nlohmann_json",
+      "GIT_REPOSITORY": "https://github.com/nlohmann/json.git",
+      "GIT_TAG": "v3.11.3"
+    }
+  ],
+  "CLANG_FLAGS":"-Wall -Wextra -Werror -O2 -g"
 }

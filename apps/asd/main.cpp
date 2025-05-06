@@ -4,6 +4,7 @@
 
 #include "subdir/class.hpp"
 #include "core/class.hpp"
+#include <fmt/core.h>
 
 using std::cin;
 using std::cout;
@@ -18,6 +19,12 @@ int main(){
 
     core::MyClass mc;
     mc.say_hello();
+    int age = 30;
+    string name = "Max";
+
+    // Format string with placeholders
+    std::string message = fmt::format("Helloooo, {}! You are {} years old.", name, age);
+    fmt::print("{}\n", message);
     system("PAUSE");
     return 0;
 }

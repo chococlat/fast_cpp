@@ -15,10 +15,6 @@ add_executable (asd ${SRC_FILES_APP})
 target_include_directories(asd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(asd PRIVATE core)
 
-if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET asd PROPERTY CXX_STANDARD 20)
-endif()
-
 # TODO: Add tests and install targets if needed.
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
