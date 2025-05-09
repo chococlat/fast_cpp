@@ -1,0 +1,26 @@
+workdir{
+    core{
+        main.cpp
+        CMakeFiles.txt
+    }
+    apps{
+        app1{
+            main.cpp
+            CMakeFiles.txt
+        }
+        app2{
+            main.cpp
+            CMakeFiles.txt
+        }
+    }
+    build{
+        apps{
+            app1{
+                app1 (executable)
+            }
+            app2{
+                app2 (executable)
+            }
+        }
+    }
+}

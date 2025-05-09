@@ -1,8 +1,10 @@
 {
-  "PROJECT_NAME": "myproj1",
+  "PROJECT_NAME": "ASDFd",
   "APPS": [
     "asd",
-    "sdf"
+    "sdf",
+    "sdfg",
+    "djsg"
   ],
   "EXTERNAL_DEPENDENCIES": [
     {
@@ -16,5 +18,5 @@
       "GIT_TAG": "v3.11.3"
     }
   ],
-  "CLANG_FLAGS":"-Wall -Wextra -Werror -O2 -g"
+  "CLANG_FLAGS": "-Wall -Wextra -Werror -O2 -g"
 }

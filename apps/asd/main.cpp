@@ -9,13 +9,10 @@
 using std::cin;
 using std::cout;
 using std::string;
-using std::wcin;
-using std::wcout;
-using std::wstring;
 namespace fs = std::filesystem;
 
 int main(){
-    std::wcout << "Hello World! from asd\n";
+    std::cout << "Hello World! from asd\n";
 
     core::MyClass mc;
     mc.say_hello();
@@ -25,6 +22,16 @@ int main(){
     // Format string with placeholders
     std::string message = fmt::format("Helloooo, {}! You are {} years old.", name, age);
     fmt::print("{}\n", message);
-    system("PAUSE");
+
+    fmt::print("Insert a string : ");
+
+    string s;
+    std::getline(std::cin, s);
+    if (s == "👋"){
+        fmt::print("Its 👋");
+    }
+
+    fmt::print("{}\n", s);
     return 0;
+    
 }

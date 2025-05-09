@@ -1,4 +1,5 @@
-﻿# CMakeList.txt : CMake project for cmake_app, include source and define
+
+# CMakeList.txt : CMake project for cmake_app, include source and define
 # project specific logic here.
 #
 include(CTest)
