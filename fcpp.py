@@ -280,27 +280,12 @@ def clangtidyfile():
     with open(f"{conf.BUILD_DIR}/clangtidy.sh","w") as ct:
         ct.write("""
 #!/bin/bash
-
+CHECKS='-checks=bugprone-*,performance-*,modernize-*'
 # Find the source file in the arguments
-for arg in "$@"; do
-    if [[ "$arg" == *.cpp ]]; then
-        if [[ "$arg" == core/* || "$arg" == apps/* || "$arg" == */core/* || "$arg" == */apps/* ]]; then
-            echo correct
-            exec clang-tidy "$@"
-             
-        else
-            echo incorrect
-            exit 0  # silently skip file
-        fi
-    else
-        echo incorrect
-    fi
-done
+exec clang-tidy $CHECKS "$@"
 
 # If no .cpp file found, just skip
 exit 0
-
-                 
                  """)
     os.system(f"chmod +x {conf.BUILD_DIR}/clangtidy.sh")
 
