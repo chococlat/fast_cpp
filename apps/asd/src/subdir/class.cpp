@@ -1,1 +1,2 @@
+
 #include "subdir/class.hpp"

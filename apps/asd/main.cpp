@@ -1,10 +1,10 @@
+
 #include <iostream>
 #include <string>
 #include <filesystem>
 
 #include "subdir/class.hpp"
-#include "core/class.hpp"
-#include <fmt/core.h>
+#include <boost/interprocess/managed_shared_memory.hpp>
 
 using std::cin;
 using std::cout;
@@ -12,26 +12,8 @@ using std::string;
 namespace fs = std::filesystem;
 
 int main(){
-    std::cout << "Hello World! from asd\n";
-
-    core::MyClass mc;
-    mc.say_hello();
-    int age = 30;
-    string name = "Max";
-
-    // Format string with placeholders
-    std::string message = fmt::format("Helloooo, {}! You are {} years old.", name, age);
-    fmt::print("{}\n", message);
-
-    fmt::print("Insert a string : ");
-
-    string s;
-    std::getline(std::cin, s);
-    if (s == "👋"){
-        fmt::print("Its 👋");
-    }
-
-    fmt::print("{}\n", s);
+    boost::interprocess::managed_shared_memory segment{boost::interprocess::open_or_create, "asd", 65536};
+    std::cout << "Hello Worlds!\n";
+    int unused_var = 42;
     return 0;
-    
 }

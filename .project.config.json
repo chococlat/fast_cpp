@@ -1,22 +1,7 @@
 {
-  "PROJECT_NAME": "ASDFd",
+  "PROJECT_NAME": "asdf",
+  "CLANG_FLAGS": "-Wall -Wextra -O2 -g",
   "APPS": [
-    "asd",
-    "sdf",
-    "sdfg",
-    "djsg"
-  ],
-  "EXTERNAL_DEPENDENCIES": [
-    {
-      "ALIAS": "fmt",
-      "GIT_REPOSITORY": "https://github.com/fmtlib/fmt.git",
-      "GIT_TAG": "9.1.0"
-    },
-    {
-      "ALIAS": "nlohmann_json",
-      "GIT_REPOSITORY": "https://github.com/nlohmann/json.git",
-      "GIT_TAG": "v3.11.3"
-    }
-  ],
-  "CLANG_FLAGS": "-Wall -Wextra -Werror -O2 -g"
+    "asd"
+  ]
 }

@@ -17,13 +17,16 @@ def cmake_gen():
     cmake_command = [
         "cmake",
         "-G", "Ninja",  # Strongly recommended to avoid MSVC detection on Windows
+        "-DCMAKE_VERBOSE_MAKEFILE=ON",
         "-DCMAKE_BUILD_TYPE=Debug",
         "-DCMAKE_C_COMPILER=clang",          # Recommended: also set C compiler
         "-DCMAKE_CXX_COMPILER=clang++",
+        f"-DCMAKE_CXX_CLANG_TIDY={os.path.abspath('build/clangtidy.sh')}",
         f"-DCMAKE_CXX_FLAGS={config['CLANG_FLAGS']}",
         ".."
     ]
     print("CMAKE COMMAND : "," ".join(cmake_command))
+    
     
     subprocess.run(cmake_command, cwd=conf.BUILD_DIR, check=True)
     subprocess.run(["cmake", "--build", "."], cwd=conf.BUILD_DIR, check=True)
@@ -66,7 +69,9 @@ def render_debug_config_vscode():
             lj.write(json.dumps(launchjson, indent=2))
 
 
-def build(target):
+def build(target,force):
+    if force:
+        subprocess.run(["ninja", "-t", "clean"], cwd=conf.BUILD_DIR, check=True)
     command = ["cmake", "--build", "."]
     if target:
         if target not in get_apps():
@@ -96,18 +101,22 @@ def create_project():
     name = input("New project name : ")
     config = get_config()
     config["PROJECT_NAME"] = name
-    config["CLANG_FLAGS"] = "-Wall -Wextra -Werror -O2 -g"
+    config["CLANG_FLAGS"] = "-Wall -Wextra -O2 -g"
     set_config(config)
     os.makedirs("core/src/core",exist_ok=True)
     os.makedirs("core/include/core",exist_ok=True)
+    with open("CorePackages.cmake","w") as w:
+        w.write(conf.CMAKE_CORE_EDITABLE)
     with open("core/src/core/class.cpp","w") as w:
         w.write(conf.DEFAULT_CORECLASSCPP)
+    with open("core/include/core/class.hpp","w") as w:
+        w.write(conf.DEFAULT_CORECLASSHPP)
     with open("core/include/core/class.hpp","w") as w:
         w.write(conf.DEFAULT_CORECLASSHPP)
     print(f"Project {name} has been created !")
     print(f" - project.config.json added")
     print(f" - core directory added")
-    
+    print(f" - CorePackages.cmake added")
 
 def create_app():
     name = input("New app name : ")
@@ -138,9 +147,16 @@ def create_app():
     
 
 def add_external_dependency():
+    print("Deprecated. Exiting...")
+    return
     alias = input("Dependency name (CMake target of the library) : ")
     repo = input("Git repository : ")
     tag = input("Git repository tag (version) : ")
+    link = input("Add library link (e.g. \"fmt::fmt\"): ")
+    cmake_target = input("Does the library have cmake target (Y/n)")
+    cmake_target = False if cmake_target in ("n","N") else True
+    
+    
     config = get_config()
     if not isinstance(config.get("EXTERNAL_DEPENDENCIES"),list):
         config["EXTERNAL_DEPENDENCIES"] = []
@@ -149,9 +165,11 @@ def add_external_dependency():
             response = input(f"Dependency with alias {alias} already exists. Do you want to update it? (y/N)")
             if response in ("y","Y"):
                 dep = {
-                    "ALIAS":alias,
-                    "GIT_REPOSITORY":repo,
-                    "GIT_TAG":tag
+                    "ALIAS" : alias,
+                    "GIT_REPOSITORY" : repo,
+                    "GIT_TAG" : tag,
+                    "LIBRARY_LINK" : link,
+                    "HAS_CMAKE_TARGET" : cmake_target
                 }
                 set_config(config)
                 print("Dependency update in .project.config.json")
@@ -160,10 +178,12 @@ def add_external_dependency():
                 print("Exiting ... ")
                 return
     config["EXTERNAL_DEPENDENCIES"].append({
-        "ALIAS":alias,
-        "GIT_REPOSITORY":repo,
-        "GIT_TAG":tag
-    })
+                    "ALIAS" : alias,
+                    "GIT_REPOSITORY" : repo,
+                    "GIT_TAG" : tag,
+                    "LIBRARY_LINK" : link,
+                    "HAS_CMAKE_TARGET" : cmake_target
+                })
     set_config(config)
     print("Dependency added in .project.config.json")
 
@@ -174,7 +194,7 @@ def render_cmake_files():
     mr = conf.CMAKELISTS_ROOT
     rendered = mr.replace("{{PROJ_NAME}}",config["PROJECT_NAME"])
     
-    if isinstance(config.get("EXTERNAL_DEPENDENCIES"),list):
+    if isinstance(config.get("EXTERNAL_DEPENDENCIES"),list) and False:
         s = ""
         for dep in config["EXTERNAL_DEPENDENCIES"]:
             s +=f"""
@@ -206,13 +226,18 @@ FetchContent_MakeAvailable({dep["ALIAS"]})
         s += f"    \"{f}\"\n"
     cr = conf.CMAKELISTS_CORE
     rendered = cr.replace("{{SRC_FILES}}",s)
-    if isinstance(config.get("EXTERNAL_DEPENDENCIES"),list):
+    if isinstance(config.get("EXTERNAL_DEPENDENCIES"),list) and False:
         s = ""
         for dep in config["EXTERNAL_DEPENDENCIES"]:
-            s += f"target_link_libraries(core PUBLIC {dep['ALIAS']}::{dep['ALIAS']})\n"
+            if dep['HAS_CMAKE_TARGET']:
+                s += f"target_link_libraries(core PUBLIC {dep['ALIAS']}::{dep['ALIAS']})\n"
+            else:
+                s += f"target_include_directories(core PUBLIC ${{{dep['ALIAS']}_SOURCE_DIR}}/include)\n"
+                
         rendered = rendered.replace("{{LIBRARIES}}",s)
     else:
-        rendered = rendered.replace("{{LIBRARIES}}", "")
+        with open("CorePackages.cmake","r") as cp:
+            rendered = rendered.replace("{{LIBRARIES}}", cp.read())
                 
  
     with open("core/CMakeLists.txt","w") as cw:
@@ -249,10 +274,41 @@ def clean():
 def format_code():
     print("Formatting code...")
     subprocess.run(["clang-format", "-i", "*.cpp", "*.h"])
+    
+def clangtidyfile():
+    os.makedirs(conf.BUILD_DIR,exist_ok=True)
+    with open(f"{conf.BUILD_DIR}/clangtidy.sh","w") as ct:
+        ct.write("""
+#!/bin/bash
+
+# Find the source file in the arguments
+for arg in "$@"; do
+    if [[ "$arg" == *.cpp ]]; then
+        if [[ "$arg" == core/* || "$arg" == apps/* || "$arg" == */core/* || "$arg" == */apps/* ]]; then
+            echo correct
+            exec clang-tidy "$@"
+             
+        else
+            echo incorrect
+            exit 0  # silently skip file
+        fi
+    else
+        echo incorrect
+    fi
+done
+
+# If no .cpp file found, just skip
+exit 0
+
+                 
+                 """)
+    os.system(f"chmod +x {conf.BUILD_DIR}/clangtidy.sh")
 
 def reload():
     render_cmake_files()
     print("- CMake files have been rendered.")
+    clangtidyfile()
+    print("- Clangtidy file has been copied to build dir.")
     cmake_gen()
     print("- CMake build directory has been created.")
     render_debug_config_vscode()
@@ -266,7 +322,7 @@ def project_wizard():
             create_app()
             continue
         break
-    while True:
+    while False:
         res = input("Add a new external dependency? (Y/n)")
         if res in ("Y","y",""):
             add_external_dependency()
@@ -274,7 +330,27 @@ def project_wizard():
         break
     reload()
     
-
+def help():
+    print("""
+          fcpp create_app       ->    To add a new app
+          fcpp build            ->    To build the entire project
+          fcpp build <app>      ->    To build a specific app
+          fcpp fbuild           ->    To force build the entire project
+          fcpp fbuild <app>     ->    To force build a specific app
+          fcpp run <app>        ->    To run a specific app
+          fcpp reload           ->    To regenerate configuration files. To be done everytime there are changes like:
+                                      - New external dependencies
+                                      - New app
+                                      - Adding or deleting src or include files
+          
+          To add external dependencies, edit "CorePackages.cmake" in the root directory,
+          where you will find some examples which you can uncomment (fmt,json,boost).
+          If you use find_package(...) you will first need to install the package (e.g. apt)
+          
+          You can also use this file to add custom configuration at core component level.
+          
+          
+          """)
 
 def main():
     parser = argparse.ArgumentParser(description="Project management tool")
@@ -299,6 +375,10 @@ def main():
     # Build command
     subparsers.add_parser("cmake_gen")
     
+    # ForceBuild command
+    parser_build = subparsers.add_parser("fbuild")
+    parser_build.add_argument("target", nargs="?", default=None, help="Build target name (default: all)")
+    
     # SmartBuild command
     parser_build = subparsers.add_parser("build")
     parser_build.add_argument("target", nargs="?", default=None, help="Build target name (default: all)")
@@ -320,8 +400,10 @@ def main():
 
     if args.command == "cmake_gen":
         cmake_gen()
+    elif args.command == "fbuild":
+        build(args.target,force=True)
     elif args.command == "build":
-        build(args.target)
+        build(args.target,force=False)
     elif args.command == "reload":
         reload()
     elif args.command == "render_vscode_debug_json":

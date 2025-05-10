@@ -3,6 +3,5 @@
 #include <iostream>
 
 void core::MyClass::say_hello() {
-    std::cout << "Hello from core!
-";
+    std::cout << "Hello from core!\n";
 }
