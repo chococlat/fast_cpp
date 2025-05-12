@@ -21,7 +21,6 @@ def cmake_gen():
         "-DCMAKE_BUILD_TYPE=Debug",
         "-DCMAKE_C_COMPILER=clang",          # Recommended: also set C compiler
         "-DCMAKE_CXX_COMPILER=clang++",
-        f"-DCMAKE_CXX_CLANG_TIDY={os.path.abspath('build/clangtidy.sh')}",
         f"-DCMAKE_CXX_FLAGS={config['CLANG_FLAGS']}",
         ".."
     ]
@@ -80,7 +79,34 @@ def build(target,force):
         command.extend(["--target", target])
     subprocess.run(command, cwd=conf.BUILD_DIR, check=True)
 
-
+exit_code_descriptions = {
+        0: "✅ Success - Process completed normally",
+        1: "❌ General Error - Operation failed",
+        2: "🔍 Misuse Error - Incorrect command usage or parameters",
+        3: "⚠️ Cannot Execute - Unable to access or run the specified file",
+        4: "🚫 Permission Denied - Insufficient privileges",
+        5: "⚙️ Configuration Error - Invalid system or application setup",
+        6: "📝 I/O Error - File or data stream operation failed",
+        7: "🔌 Connection Error - Network or device communication issue",
+        8: "💾 Resource Error - Insufficient memory or storage space",
+        9: "🔒 Security Error - Access violation or authentication failure",
+        10: "⏱️ Timeout Error - Operation exceeded time limit",
+        11: "📊 Data Error - Invalid or corrupt data encountered",
+        # Negative exit codes
+        -1: "🔄 Operation Incomplete - Process exited without completing task",
+        -2: "🛑 Fatal Error - Critical failure in execution",
+        -9: "💣 Forced Termination - Process killed by external signal",
+        -11: "💥 Segmentation Fault - Memory access violation",
+        -15: "🚫 Terminated - Process ended by termination signal",
+        # Standard positive codes
+        126: "🛑 Permission Error - Command found but not executable",
+        127: "🔎 Command Not Found - Specified command does not exist",
+        128: "💥 Invalid Exit Argument - Exit code base for fatal signals",
+        130: "🛑 Process Interrupted - User terminated process (SIGINT/Ctrl+C)",
+        137: "⚡ Process Killed - Forcibly terminated (SIGKILL)",
+        139: "🧩 Segmentation Fault - Memory access violation",
+        255: "⛔ Exit Status Out of Range - Exit code exceeded valid range"
+    }
 def run(app):
     if app == "core":
         print("CORE is not intended to be run individually.")
@@ -94,7 +120,21 @@ def run(app):
     if not os.path.exists(exe_path):
         print(f"Executable not found: {exe_path}")
         return
-    subprocess.run([exe_path], check=True)
+    try:
+        # Run the process and capture the exit code
+        completed_process = subprocess.run([exe_path], check=False)
+        exit_code = completed_process.returncode
+        
+        # Get the description for the exit code, or provide a generic one if not found
+        description = exit_code_descriptions.get(
+            exit_code, 
+            f"🔄 Exit Code {exit_code} - Undocumented status code"
+        )
+        print(description)
+    except subprocess.SubprocessError as e:
+        return f"fcpp: Process '{app}' exited {str(e)}"
+    except Exception as e:
+        return f"⚠️ Unexpected Error - Exception occurred: {str(e)}"
 
 
 def create_project():
@@ -292,8 +332,8 @@ exit 0
 def reload():
     render_cmake_files()
     print("- CMake files have been rendered.")
-    clangtidyfile()
-    print("- Clangtidy file has been copied to build dir.")
+    #clangtidyfile()
+    #print("- Clangtidy file has been copied to build dir.")
     cmake_gen()
     print("- CMake build directory has been created.")
     render_debug_config_vscode()

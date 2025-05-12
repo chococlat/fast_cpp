@@ -15,5 +15,8 @@ int main(){
     boost::interprocess::managed_shared_memory segment{boost::interprocess::open_or_create, "asd", 65536};
     std::cout << "Hello Worlds!\n";
     int unused_var = 42;
+    int arr[10];
+    int *po;
+    *po = 5;
     return 0;
 }
